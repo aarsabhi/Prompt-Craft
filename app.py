@@ -8,10 +8,13 @@ import re
 
 # Load environment variables from .env
 load_dotenv()
-openai.api_type = "azure"
-openai.api_base = os.getenv("AZURE_OPENAI_ENDPOINT")
-openai.api_version = os.getenv("AZURE_OPENAI_API_VERSION")
-openai.api_key = os.getenv("AZURE_OPENAI_KEY")
+
+# Initialize Azure OpenAI client for openai>=1.0.0
+client = openai.AzureOpenAI(
+    api_key=os.getenv("AZURE_OPENAI_KEY"),
+    api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
+)
 DEPLOYMENT_ID = os.getenv("AZURE_OPENAI_DEPLOYMENT")
 
 PROMPT_LIBRARY_FILE = "prompts.json"
@@ -99,8 +102,8 @@ def refine_prompt(raw_prompt):
     )
     try:
         with st.spinner("✨ Refining your prompt..."):
-            response = openai.ChatCompletion.create(
-                deployment_id=DEPLOYMENT_ID,
+            response = client.chat.completions.create(
+                model=DEPLOYMENT_ID,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": raw_prompt}
@@ -122,8 +125,8 @@ def get_prompt_output(refined_prompt, user_inputs):
     )
     try:
         with st.spinner("🚀 Generating output..."):
-            response = openai.ChatCompletion.create(
-                deployment_id=DEPLOYMENT_ID,
+            response = client.chat.completions.create(
+                model=DEPLOYMENT_ID,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt_filled}
